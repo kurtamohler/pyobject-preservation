@@ -29,9 +29,6 @@ conda env create -f environment.yaml -n pyobject-preservation
 conda activate pyobject-preservation
 ```
 ```shell
-python setup.py build_clib
-```
-```shell
 python setup.py install
 ```
 

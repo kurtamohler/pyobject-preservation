@@ -1,7 +1,7 @@
 #include <Python.h>
 #include <iostream>
 
-#include "cpp/my_lib.h"
+#include "my_lib_cpp.h"
 
 static PyMethodDef module_methods[] = {
   { NULL, NULL }
