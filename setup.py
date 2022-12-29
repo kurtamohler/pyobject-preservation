@@ -9,7 +9,8 @@ with open('LICENSE') as f:
 
 py_ext = Extension(
     '_my_lib',
-    sources=['src/my_lib_py.cpp'],
+    sources=['my_lib_py/my_lib_py.cpp'],
+    include_dirs=['my_lib_cpp'],
     libraries=['my_lib_cpp'])
 
 #c_ext = Extension()
@@ -29,9 +30,9 @@ setup(
     ext_modules=modules,
     libraries=[['my_lib_cpp', {
         'sources': [
-            'src/cpp/my_lib.cpp',
+            'my_lib_cpp/my_lib_cpp.cpp',
         ],
-        'include_dirs': ['src/cpp'],
+        'include_dirs': ['my_lib_cpp'],
         }
     ]]
 )
