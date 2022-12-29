@@ -7,16 +7,24 @@ with open('README.md') as f:
 with open('LICENSE') as f:
     license = f.read()
 
-py_ext = Extension(
+my_lib_py_extension = Extension(
     '_my_lib',
-    sources=['my_lib_py/my_lib_py.cpp'],
+    sources=[
+        'my_lib_py/my_lib_py.cpp'
+    ],
     include_dirs=['my_lib_cpp'],
     libraries=['my_lib_cpp'])
 
-#c_ext = Extension()
+ext_modules = [my_lib_py_extension]
 
-modules = [py_ext]
+my_lib_cpp = ['my_lib_cpp', dict(
+    sources=[
+        'my_lib_cpp/my_lib_cpp.cpp',
+    ],
+    include_dirs=['my_lib_cpp'],
+)]
 
+libraries = [my_lib_cpp]
 
 setup(
     name='pyobject-preservation',
@@ -27,12 +35,6 @@ setup(
     author_email='kurtamohler@gmail.com',
     url='https://github.com/kurtamohler/pyobject-preservation',
     license=license,
-    ext_modules=modules,
-    libraries=[['my_lib_cpp', {
-        'sources': [
-            'my_lib_cpp/my_lib_cpp.cpp',
-        ],
-        'include_dirs': ['my_lib_cpp'],
-        }
-    ]]
+    ext_modules=ext_modules,
+    libraries=libraries,
 )
