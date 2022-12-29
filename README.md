@@ -29,6 +29,9 @@ conda env create -f environment.yaml -n pyobject-preservation
 conda activate pyobject-preservation
 ```
 ```shell
+python setup.py build_clib
+```
+```shell
 python setup.py install
 ```
 
@@ -109,3 +112,7 @@ Ownership will be flipped back again and the new Python reference will point to
 the same exact instance of the Python `MyClass` that we had originally. Weak
 references will remain valid and the `__dict__` on the Python object will be
 preserved.
+
+One tricky part of this is that if someone wants to use only the C/C++ API from
+your library, then they should not have to depend on CPython at all. So the C/C++
+`MyClass` definition should not `#include <Python.h>`.
