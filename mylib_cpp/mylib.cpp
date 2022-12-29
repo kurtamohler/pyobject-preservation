@@ -1,5 +1,5 @@
 #include <iostream>
-#include "my_lib_cpp.h"
+#include "mylib.h"
 
 MyClass::MyClass() {
   std::cout << "in MyClass::MyClass()" << std::endl;
@@ -10,5 +10,5 @@ MyClass::~MyClass() {
 }
 
 void MyClass::print_message() {
-  std::cout << "in MyClass::print_message" << std::endl;
+  std::cout << "in MyClass::print_message()" << std::endl;
 }

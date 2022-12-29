@@ -1,4 +1,4 @@
-import _my_lib
+import mylib
 
-obj = _my_lib.MyClass()
+obj = mylib.MyClass()
 obj.print_message()

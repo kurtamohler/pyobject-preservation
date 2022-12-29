@@ -1,7 +1,7 @@
 #include <Python.h>
 #include <iostream>
 
-#include "my_lib_cpp.h"
+#include "mylib.h"
 
 struct MyClassPy {
   PyObject_HEAD
@@ -60,12 +60,12 @@ static PyMethodDef module_methods[] = {
 
 static struct PyModuleDef module = {
   PyModuleDef_HEAD_INIT,
-  .m_name = "_my_lib",
+  .m_name = "mylib",
   .m_methods = module_methods
 };
 
 PyMODINIT_FUNC
-PyInit__my_lib(void) {
+PyInit_mylib(void) {
   PyObject* m;
   if (PyType_Ready(&MyClassPyType) < 0) {
     return NULL;
