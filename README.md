@@ -40,7 +40,7 @@ python setup.py install
 Run the example script:
 
 ```shell
-python preservation.py
+python example.py
 ```
 
 ## Explanation
