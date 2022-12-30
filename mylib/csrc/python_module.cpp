@@ -8,12 +8,12 @@ static PyMethodDef module_methods[] = {
 
 static struct PyModuleDef module = {
   PyModuleDef_HEAD_INIT,
-  .m_name = "mylib",
+  .m_name = "_mylib",
   .m_methods = module_methods
 };
 
 PyMODINIT_FUNC
-PyInit_mylib(void) {
+PyInit__mylib(void) {
   PyObject* m;
 
   m = PyModule_Create(&module);
