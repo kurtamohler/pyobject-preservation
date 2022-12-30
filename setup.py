@@ -10,14 +10,15 @@ with open('LICENSE') as f:
 mylib_py = Extension(
     'mylib',
     sources=[
-        'mylib_py/python_module.cpp'
+        'mylib_py/python_module.cpp',
+        'mylib_py/PyMyClass.cpp',
     ],
     include_dirs=['mylib_cpp'],
     libraries=['mylib_cpp'])
 
 mylib_cpp = ['mylib_cpp', dict(
     sources=[
-        'mylib_cpp/mylib.cpp',
+        'mylib_cpp/MyClass.cpp',
     ],
     include_dirs=['mylib_cpp'],
 )]

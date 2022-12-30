@@ -1,8 +1,3 @@
-class MyClass {
-public:
-  MyClass();
+#pragma once
 
-  ~MyClass();
-
-  void print_message();
-};
+#include "MyClass.h"
