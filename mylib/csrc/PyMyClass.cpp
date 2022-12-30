@@ -55,7 +55,7 @@ bool PyMyClass_init_module(PyObject* module) {
   }
 
   Py_INCREF(&PyTypeMyClass);
-  if (PyModule_AddObject(module, "MyClass", (PyObject*) &PyTypeMyClass) < 0) {
+  if (PyModule_AddObject(module, "_MyClassBase", (PyObject*) &PyTypeMyClass) < 0) {
     Py_DECREF(&PyTypeMyClass);
     return false;
   }
