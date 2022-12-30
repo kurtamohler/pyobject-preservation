@@ -10,7 +10,7 @@ with open('LICENSE') as f:
 mylib_cpython = Extension(
     '_mylib',
     sources=[
-        'mylib/csrc/python_module.cpp',
+        'mylib/csrc/Module.cpp',
         'mylib/csrc/MyClassBase.cpp',
     ],
     include_dirs=['mylib_cpp'],
