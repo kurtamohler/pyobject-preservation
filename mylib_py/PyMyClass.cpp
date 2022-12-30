@@ -17,10 +17,6 @@ static PyObject* PyMyClass_new(PyTypeObject* type, PyObject* args, PyObject* kwa
   return (PyObject*) self;
 }
 
-static int PyMyClass_init(PyMyClass* self, PyObject* args, PyObject* kwargs) {
-  return 0;
-}
-
 static void PyMyClass_dealloc(PyMyClass* self) {
   if (self->cdata) {
     delete self->cdata;
@@ -50,7 +46,6 @@ static PyTypeObject PyTypeMyClass = {
   .tp_dealloc = (destructor) PyMyClass_dealloc,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_methods = PyMyClass_methods,
-  .tp_init = (initproc) PyMyClass_init,
   .tp_new = PyMyClass_new,
 };
 
