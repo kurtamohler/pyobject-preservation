@@ -12,6 +12,7 @@ mylib_cpython = Extension(
     sources=[
         'mylib/csrc/Module.cpp',
         'mylib/csrc/MyClassBase.cpp',
+        'mylib/csrc/MyClassRef.cpp',
     ],
     include_dirs=['mylib_cpp'],
     libraries=['mylib_cpp'])

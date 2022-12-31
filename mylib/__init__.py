@@ -1,4 +1,4 @@
-import _mylib
+from ._myclass import MyClass
+from _mylib import MyClassRef
 
-class MyClass(_mylib._MyClassBase, metaclass=_mylib._MyClassMeta):
-    pass
+#del _myclass

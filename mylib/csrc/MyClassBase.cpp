@@ -1,12 +1,5 @@
-#include <Python.h>
-
+#include <iostream>
 #include "MyClassBase.h"
-#include "mylib.h"
-
-struct MyClassBase {
-  PyObject_HEAD
-  MyClass* cdata;
-};
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
@@ -32,6 +25,15 @@ static PyMethodDef MyClassBase_methods[] = {
 };
 
 void MyClassBase_subclass_dealloc(PyObject* self) {
+  //if (MyClassBase_Check(self)) {
+  //  std::cout << "deallocating a MyClass object" << std::endl;
+  //} else {
+  //  std::cout << "not deallocating a MyClass object???" << std::endl;
+  //}
+
+  //if (MyClassBase_try_resurrect((MyClassBase*)self)) {
+  //  return;
+  //}
   MyClassBase_clear((MyClassBase*)self);
   Py_TYPE(self)->tp_free((PyObject*) self);
 }
@@ -77,6 +79,40 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
     self->cdata = new MyClass();
   }
   return (PyObject*) self;
+}
+
+static PyObject* MyClassBaseClass = nullptr;
+
+bool MyClassBase_Check(PyObject* obj) {
+  if (!MyClassBaseClass) {
+    auto myclass_module = PyImport_ImportModule("mylib._myclass");
+    if (!myclass_module) {
+      PyErr_SetString(
+        PyExc_RuntimeError,
+        "Cannot import 'mylib._myclass' for some reason");
+      return false;
+    }
+    std::cout << "got mylib module" << std::endl;
+
+    MyClassBaseClass = PyObject_GetAttrString(myclass_module, "MyClass");
+    if (!MyClassBaseClass) {
+      PyErr_SetString(
+        PyExc_RuntimeError,
+        "Cannot find 'mylib._myclass.MyClass' for some reason");
+      return false;
+    }
+    std::cout << "got mylib.MyClass" << std::endl;
+  }
+
+  const auto result = PyObject_IsInstance(obj, MyClassBaseClass);
+  if (result == -1) {
+    PyErr_SetString(
+      PyExc_RuntimeError,
+      "Cannot check against 'mylib._myclass.MyClass' for some reason");
+    return false;
+  }
+
+  return result;
 }
 
 bool MyClassBase_init_module(PyObject* module) {
