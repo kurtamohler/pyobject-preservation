@@ -1,12 +1,4 @@
-#include <Python.h>
-
 #include "MyClassBase.h"
-#include "mylib.h"
-
-struct MyClassBase {
-  PyObject_HEAD
-  MyClass* cdata;
-};
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
@@ -77,6 +69,37 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
     self->cdata = new MyClass();
   }
   return (PyObject*) self;
+}
+
+static PyObject* MyClassBaseClass = nullptr;
+
+bool MyClassBase_Check(PyObject* obj) {
+  if (!MyClassBaseClass) {
+    auto myclass_module = PyImport_ImportModule("mylib._myclass");
+    if (!myclass_module) {
+      PyErr_SetString(
+        PyExc_RuntimeError,
+        "Cannot import 'mylib._myclass' for some reason");
+      return false;
+    }
+    MyClassBaseClass = PyObject_GetAttrString(myclass_module, "MyClass");
+    if (!MyClassBaseClass) {
+      PyErr_SetString(
+        PyExc_RuntimeError,
+        "Cannot find 'mylib._myclass.MyClass' for some reason");
+      return false;
+    }
+  }
+
+  const auto result = PyObject_IsInstance(obj, MyClassBaseClass);
+  if (result == -1) {
+    PyErr_SetString(
+      PyExc_RuntimeError,
+      "Cannot check against 'mylib._myclass.MyClass' for some reason");
+    return false;
+  }
+
+  return result;
 }
 
 bool MyClassBase_init_module(PyObject* module) {

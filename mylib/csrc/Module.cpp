@@ -1,6 +1,7 @@
 #include <Python.h>
 
 #include "MyClassBase.h"
+#include "MyClassRef.h"
 
 static PyMethodDef module_methods[] = {
   { NULL, NULL }
@@ -22,6 +23,11 @@ PyInit__mylib(void) {
   }
 
   if (!MyClassBase_init_module(m)) {
+    Py_DECREF(m);
+    return NULL;
+  }
+
+  if (!MyClassRef_init_module(m)) {
     Py_DECREF(m);
     return NULL;
   }
