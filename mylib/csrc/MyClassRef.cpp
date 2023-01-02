@@ -1,18 +1,30 @@
+// `MyClassRef` is a class that can retain a reference to a `MyClass` object in
+// C++ while all Python references to the object have been deleted. This
+// provides a way to exercise the PyObject preservation and resurrection
+// pattern.
+
 #include "MyClassRef.h"
 #include "MyClassBase.h"
 
 struct MyClassRef {
   PyObject_HEAD
 
-  // TODO: Change this to a `MyClass*` and add preservation and resurrection
+  // TODO: Once `MyClass` has PyObject preservation/resurrection, change this
+  // to a `MyClass*`, and don't incref/decref the `MyClassBase` PyObject in the
+  // new/dealloc methods below.
   PyObject* obj;
 };
 
 static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
-  // TODO: This doesn't work because it's a tuple. Just use the proper arg parser
-  if (!MyClassBase_Check(args)) {
+  PyObject* obj;
+
+  if (!PyArg_ParseTuple(args, "O", &obj)) {
+    return nullptr;
+  }
+
+  if (!MyClassBase_Check(obj)) {
     PyErr_SetString(
-      PyExc_RuntimeError,
+      PyExc_TypeError,
       "Expected arg 0 to be a `MyClass`");
     return NULL;
   }
@@ -20,12 +32,15 @@ static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kw
   MyClassRef* self;
   self = (MyClassRef*) type->tp_alloc(type, 0);
   if (self) {
-    // TODO: Change this to grab the underlying `MyClass*` and remove the
-    // incref here
-    self->obj = args;
-    Py_INCREF(args);
+    self->obj = obj;
+    Py_INCREF(obj);
   }
   return (PyObject*) self;
+}
+
+static void MyClassRef_dealloc(PyObject* self) {
+  Py_DECREF(((MyClassRef*)self)->obj);
+  Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject* MyClassRef_get(MyClassRef* self, PyObject* Py_UNUSED(ignored)) {
@@ -47,13 +62,10 @@ static PyTypeObject MyClassRefType = {
   PyVarObject_HEAD_INIT(&PyType_Type, 0)
   .tp_name = "MyClassRef",
   .tp_basicsize = sizeof(MyClassRef),
-  .tp_dealloc = nullptr,
+  .tp_dealloc = MyClassRef_dealloc,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_methods = MyClassRef_methods,
   .tp_new = MyClassRef_new,
-
-  // TODO: Add this:
-  //.tp_dealloc = MyClassRef_dealloc,
 };
 
 
