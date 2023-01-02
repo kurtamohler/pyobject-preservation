@@ -2,7 +2,6 @@
 
 #include "mylib.h"
 
-// TODO: I guess I don't need this in header necessarily?
 struct MyClassBase {
   PyObject_HEAD
   MyClass* cdata;

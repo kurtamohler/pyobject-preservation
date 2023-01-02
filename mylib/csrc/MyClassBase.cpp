@@ -1,4 +1,3 @@
-#include <iostream>
 #include "MyClassBase.h"
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
@@ -25,15 +24,6 @@ static PyMethodDef MyClassBase_methods[] = {
 };
 
 void MyClassBase_subclass_dealloc(PyObject* self) {
-  //if (MyClassBase_Check(self)) {
-  //  std::cout << "deallocating a MyClass object" << std::endl;
-  //} else {
-  //  std::cout << "not deallocating a MyClass object???" << std::endl;
-  //}
-
-  //if (MyClassBase_try_resurrect((MyClassBase*)self)) {
-  //  return;
-  //}
   MyClassBase_clear((MyClassBase*)self);
   Py_TYPE(self)->tp_free((PyObject*) self);
 }
@@ -92,8 +82,6 @@ bool MyClassBase_Check(PyObject* obj) {
         "Cannot import 'mylib._myclass' for some reason");
       return false;
     }
-    std::cout << "got mylib module" << std::endl;
-
     MyClassBaseClass = PyObject_GetAttrString(myclass_module, "MyClass");
     if (!MyClassBaseClass) {
       PyErr_SetString(
@@ -101,7 +89,6 @@ bool MyClassBase_Check(PyObject* obj) {
         "Cannot find 'mylib._myclass.MyClass' for some reason");
       return false;
     }
-    std::cout << "got mylib.MyClass" << std::endl;
   }
 
   const auto result = PyObject_IsInstance(obj, MyClassBaseClass);
