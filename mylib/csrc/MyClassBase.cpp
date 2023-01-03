@@ -31,7 +31,7 @@ void MyClassBase_subclass_dealloc(PyObject* self) {
   if (Py_REFCNT(self) == 0) {
     // If there are still references to the C++ MyClass when the PyObject is
     // being deallocated, then we have to swap ownership of the MyClassBase to
-    // the C++ MyClass.
+    // the C++ MyClass to preserve it.
     //
     // TODO: This implicitly assumes that no two different MyClassBase instances
     // can ever point to the same C++ MyClass, but I should probably add support
@@ -133,6 +133,39 @@ bool MyClassBase_Check(PyObject* obj) {
   }
 
   return result;
+}
+
+PyObject* MyClassBase_get_from_cdata(std::shared_ptr<MyClass> cdata) {
+  if (!cdata->pyobject()) {
+    throw std::runtime_error(
+      "MyClassBase_get_from_cdata received cdata with a null PyObject");
+  }
+
+  PyObject* pyobject = cdata->pyobject();
+
+  // If cdata owns the PyObject, we need to resurrect it
+  if (cdata->owns_pyobject()) {
+    // The PyObject refcount should remain 1 the whole time it's a zombie. If it's
+    // not, then something went wrong.
+    if (Py_REFCNT(pyobject) != 1) {
+      throw std::runtime_error((
+        "For some reason, we're trying to resurrect a PyObject whose refcount "
+        "is not equal to 1"));
+    }
+
+    // The C++ `MyClass` won't have an owning ref any more, but we'll have
+    // a new ref in Python when this function returns. So the Py_REFCNT should
+    // not be changed in this case
+    MyClassBase* base = (MyClassBase*) pyobject;
+    base->cdata = cdata;
+
+    cdata->set_owns_pyobject(false);
+
+  } else {
+    Py_INCREF(pyobject);
+  }
+
+  return pyobject;
 }
 
 bool MyClassBase_init_module(PyObject* module) {

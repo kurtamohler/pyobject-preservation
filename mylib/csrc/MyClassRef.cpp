@@ -46,33 +46,7 @@ static void MyClassRef_dealloc(PyObject* self) {
 }
 
 static PyObject* MyClassRef_get(MyClassRef* self, PyObject* Py_UNUSED(ignored)) {
-  PyObject* pyobject = self->ptr->pyobject();
-
-  // If the C++ MyClass owns the PyObject, then we need to switch ownership
-  // back to the PyObject
-  // TODO: This next part shouldn't be implemented in MyClassRef_get. Maybe should be
-  // in a new method like MyClassBase_get_new_reference() or something.
-  if (self->ptr->owns_pyobject()) {
-    std::cout << "Resurrecting PyObject!!!!" << std::endl;
-
-    // The PyObject refcount should remain 1 the whole time it's a zombie.
-    // Also, after we resurrect it, the C++ `MyClass` won't have an owning ref
-    // any more, but we'll have a new ref in Python. So we don't want to change
-    // the refcount here
-    if (Py_REFCNT(pyobject) != 1) {
-      throw std::runtime_error((
-        "For some reason, we're resurrecting a PyObject whose refcount is not "
-        "exactly equal to 1!"));
-    }
-
-    MyClassBase* base = (MyClassBase*)pyobject;
-    base->cdata = self->ptr;
-    self->ptr->set_owns_pyobject(false);
-
-  } else {
-    Py_INCREF(pyobject);
-  }
-  return pyobject;
+  return MyClassBase_get_from_cdata(self->ptr);
 }
 
 static PyMethodDef MyClassRef_methods[] = {
