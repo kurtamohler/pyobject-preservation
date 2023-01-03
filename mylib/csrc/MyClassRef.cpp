@@ -2,6 +2,8 @@
 // C++ while all Python references to the object have been deleted. This
 // provides a way to exercise the PyObject preservation and resurrection
 // pattern.
+//
+#include <memory>
 
 #include "MyClassRef.h"
 #include "MyClassBase.h"
@@ -13,16 +15,17 @@ struct MyClassRef {
   // to a `MyClass*`, and don't incref/decref the `MyClassBase` PyObject in the
   // new/dealloc methods below.
   PyObject* obj;
+  //std::shared_ptr<MyClass> obj;
 };
 
 static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
-  PyObject* obj;
+  MyClassRef* py_obj;
 
-  if (!PyArg_ParseTuple(args, "O", &obj)) {
+  if (!PyArg_ParseTuple(args, "O", &py_obj)) {
     return nullptr;
   }
 
-  if (!MyClassBase_Check(obj)) {
+  if (!MyClassBase_Check((PyObject*)py_obj)) {
     PyErr_SetString(
       PyExc_TypeError,
       "Expected arg 0 to be a `MyClass`");
@@ -32,8 +35,8 @@ static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kw
   MyClassRef* self;
   self = (MyClassRef*) type->tp_alloc(type, 0);
   if (self) {
-    self->obj = obj;
-    Py_INCREF(obj);
+    self->obj = (PyObject*)py_obj;
+    Py_INCREF(self->obj);
   }
   return (PyObject*) self;
 }

@@ -12,3 +12,11 @@ MyClass::~MyClass() {
 void MyClass::print_message() {
   std::cout << "in MyClass::print_message()" << std::endl;
 }
+
+void MyClass::set_pyobject(PyObject* pyobject) {
+  pyobject_ = pyobject;
+}
+
+PyObject* MyClass::pyobject() {
+  return pyobject_;
+}

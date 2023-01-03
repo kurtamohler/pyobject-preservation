@@ -1,10 +1,11 @@
 #include <Python.h>
+#include <memory>
 
 #include "mylib.h"
 
 struct MyClassBase {
   PyObject_HEAD
-  MyClass* cdata;
+  std::shared_ptr<MyClass> cdata;
 };
 
 bool MyClassBase_Check(PyObject* obj);

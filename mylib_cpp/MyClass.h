@@ -10,6 +10,11 @@ public:
 
   void print_message();
 
+  void set_pyobject(PyObject* pyobject);
+
+  PyObject* pyobject();
+
 private:
-  PyObject* pyobj_;
+  PyObject* pyobject_;
+  bool owns_pyobject_;
 };

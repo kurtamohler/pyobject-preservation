@@ -3,9 +3,7 @@
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
 static void MyClassBase_clear(MyClassBase* self) {
-  if (self->cdata) {
-    delete self->cdata;
-  }
+  // TODO: I might not actually need this function, we'll see
 }
 
 static PyObject* MyClassBase_print_message(MyClassBase* self, PyObject* Py_UNUSED(ignored)) {
@@ -24,6 +22,14 @@ static PyMethodDef MyClassBase_methods[] = {
 };
 
 void MyClassBase_subclass_dealloc(PyObject* self) {
+  // Delete the `shared_pointer<MyClass>` properly before freeing
+  // `MyClassBase`'s memory, so that the `MyClass::~MyClass` will be called now
+  // if this was the last pointer
+  // TODO: Does this really work? I won't really know until I try to either create
+  // another `MyClassBase` that points to the same `MyClass` or, better yet, when I
+  // change `MyClassRef` to hold a `shared_ptr<MyClass>` instead of a `MyClassBase*`.
+  ((MyClassBase*)self)->cdata.reset();
+
   MyClassBase_clear((MyClassBase*)self);
   Py_TYPE(self)->tp_free((PyObject*) self);
 }
@@ -66,8 +72,10 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
   MyClassBase* self;
   self = (MyClassBase*) type->tp_alloc(type, 0);
   if (self) {
-    self->cdata = new MyClass();
+    self->cdata = std::make_shared<MyClass>();
+    self->cdata->set_pyobject((PyObject*) self);
   }
+
   return (PyObject*) self;
 }
 
