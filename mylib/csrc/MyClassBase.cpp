@@ -24,16 +24,39 @@ static PyMethodDef MyClassBase_methods[] = {
 
 void MyClassBase_subclass_dealloc(PyObject* self) {
   std::cout << "in MyClassBase_subclass_dealloc" << std::endl;
-  // Delete the `shared_pointer<MyClass>` properly before freeing
-  // `MyClassBase`'s memory, so that the `MyClass::~MyClass` will be called now
-  // if this was the last pointer
-  // TODO: Does this really work? I won't really know until I try to either create
-  // another `MyClassBase` that points to the same `MyClass` or, better yet, when I
-  // change `MyClassRef` to hold a `shared_ptr<MyClass>` instead of a `MyClassBase*`.
-  ((MyClassBase*)self)->cdata.reset();
 
-  MyClassBase_clear((MyClassBase*)self);
-  Py_TYPE(self)->tp_free((PyObject*) self);
+  MyClassBase* base = (MyClassBase*) self;
+
+
+  if (Py_REFCNT(self) == 0) {
+    // If there are still references to the C++ MyClass when the PyObject is
+    // being deallocated, then we have to swap ownership of the MyClassBase to
+    // the C++ MyClass.
+    //
+    // TODO: This implicitly assumes that no two different MyClassBase instances
+    // can ever point to the same C++ MyClass, but I should probably add support
+    // for that, which will break this logic.
+    if (base->cdata.use_count() > 1) {
+      std::cout << "Preserving PyObject!!!!" << std::endl;
+      MyClass* myobj = base->cdata.get();
+
+      myobj->set_owns_pyobject(true);
+
+      // Need to incref the PyObject to keep it in the zombie state
+      Py_INCREF(self);
+
+      base->cdata.reset();
+
+    } else {
+      std::cout << "Deleting PyObject!!!!" << std::endl;
+      base->cdata.reset();
+
+      MyClassBase_clear((MyClassBase*)self);
+      Py_TYPE(self)->tp_free((PyObject*) self);
+    }
+  } else {
+    std::cout << "PyObject refcount is nonzero, keeping alive" << std::endl;
+  }
 }
 
 int MyClassMeta_init(PyObject* cls, PyObject* args, PyObject* kwargs) {

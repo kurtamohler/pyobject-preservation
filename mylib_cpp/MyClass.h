@@ -14,6 +14,10 @@ public:
 
   PyObject* pyobject();
 
+  void set_owns_pyobject(bool owns_pyobject);
+
+  bool owns_pyobject();
+
 private:
   PyObject* pyobject_;
   bool owns_pyobject_;

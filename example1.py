@@ -10,14 +10,23 @@ print('\ncreate ref')
 ref = mylib.MyClassRef(obj)
 
 
-print('\ncall method')
-ref.get().print_message()
+print('\ngetting obj from ref')
+obj2 = ref.get()
 
 print('\ndelete ref')
 del ref
 
-print('\ndelete ')
+print('\ncall method on first obj')
+obj.print_message()
+
+print('\ndelete first obj')
 del obj
+
+print('\ncall method on second obj')
+obj2.print_message()
+
+print('\ndelete second obj')
+del obj2
 
 print('\ncollect')
 gc.collect()

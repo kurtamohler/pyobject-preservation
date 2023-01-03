@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <iostream>
+#include <stdexcept>
 
 #include "MyClassRef.h"
 #include "MyClassBase.h"
@@ -34,29 +35,43 @@ static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kw
   self = (MyClassRef*) type->tp_alloc(type, 0);
   if (self) {
     self->ptr = base->cdata;
-    Py_INCREF(self->ptr->pyobject());
   }
   return (PyObject*) self;
 }
 
 static void MyClassRef_dealloc(PyObject* self) {
   std::cout << "in MyClassRef_dealloc" << std::endl;
-
-  // TODO: At the moment, MyClassRef is taking care of decrefing MyClassBase,
-  // which means that it's acting like a direct owning reference to
-  // MyClassBase, as well as to the C++ MyClass. But I only want MyClassRef to
-  // own a ref to the C++ MyClass. Removing the owning ref to MyClassBase, and
-  // thus removing this decref and the earlier incref, will require finally
-  // adding the preservation/resurrection pattern to the C++ MyClass
-  Py_DECREF(((MyClassRef*)self)->ptr->pyobject());
-
   ((MyClassRef*)self)->ptr.reset();
   Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject* MyClassRef_get(MyClassRef* self, PyObject* Py_UNUSED(ignored)) {
   PyObject* pyobject = self->ptr->pyobject();
-  Py_INCREF(pyobject);
+
+  // If the C++ MyClass owns the PyObject, then we need to switch ownership
+  // back to the PyObject
+  // TODO: This next part shouldn't be implemented in MyClassRef_get. Maybe should be
+  // in a new method like MyClassBase_get_new_reference() or something.
+  if (self->ptr->owns_pyobject()) {
+    std::cout << "Resurrecting PyObject!!!!" << std::endl;
+
+    // The PyObject refcount should remain 1 the whole time it's a zombie.
+    // Also, after we resurrect it, the C++ `MyClass` won't have an owning ref
+    // any more, but we'll have a new ref in Python. So we don't want to change
+    // the refcount here
+    if (Py_REFCNT(pyobject) != 1) {
+      throw std::runtime_error((
+        "For some reason, we're resurrecting a PyObject whose refcount is not "
+        "exactly equal to 1!"));
+    }
+
+    MyClassBase* base = (MyClassBase*)pyobject;
+    base->cdata = self->ptr;
+    self->ptr->set_owns_pyobject(false);
+
+  } else {
+    Py_INCREF(pyobject);
+  }
   return pyobject;
 }
 
