@@ -2,53 +2,62 @@
 // C++ while all Python references to the object have been deleted. This
 // provides a way to exercise the PyObject preservation and resurrection
 // pattern.
-//
+
 #include <memory>
+#include <iostream>
 
 #include "MyClassRef.h"
 #include "MyClassBase.h"
 
 struct MyClassRef {
   PyObject_HEAD
-
-  // TODO: Once `MyClass` has PyObject preservation/resurrection, change this
-  // to a `MyClass*`, and don't incref/decref the `MyClassBase` PyObject in the
-  // new/dealloc methods below.
-  PyObject* obj;
-  //std::shared_ptr<MyClass> obj;
+  std::shared_ptr<MyClass> ptr;
 };
 
 static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
-  MyClassRef* py_obj;
+  PyObject* pyobject;
 
-  if (!PyArg_ParseTuple(args, "O", &py_obj)) {
+  if (!PyArg_ParseTuple(args, "O", &pyobject)) {
     return nullptr;
   }
 
-  if (!MyClassBase_Check((PyObject*)py_obj)) {
+  if (!MyClassBase_Check(pyobject)) {
     PyErr_SetString(
       PyExc_TypeError,
       "Expected arg 0 to be a `MyClass`");
     return NULL;
   }
 
+  MyClassBase* base = (MyClassBase*)pyobject;
+
   MyClassRef* self;
   self = (MyClassRef*) type->tp_alloc(type, 0);
   if (self) {
-    self->obj = (PyObject*)py_obj;
-    Py_INCREF(self->obj);
+    self->ptr = base->cdata;
+    Py_INCREF(self->ptr->pyobject());
   }
   return (PyObject*) self;
 }
 
 static void MyClassRef_dealloc(PyObject* self) {
-  Py_DECREF(((MyClassRef*)self)->obj);
+  std::cout << "in MyClassRef_dealloc" << std::endl;
+
+  // TODO: At the moment, MyClassRef is taking care of decrefing MyClassBase,
+  // which means that it's acting like a direct owning reference to
+  // MyClassBase, as well as to the C++ MyClass. But I only want MyClassRef to
+  // own a ref to the C++ MyClass. Removing the owning ref to MyClassBase, and
+  // thus removing this decref and the earlier incref, will require finally
+  // adding the preservation/resurrection pattern to the C++ MyClass
+  Py_DECREF(((MyClassRef*)self)->ptr->pyobject());
+
+  ((MyClassRef*)self)->ptr.reset();
   Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject* MyClassRef_get(MyClassRef* self, PyObject* Py_UNUSED(ignored)) {
-  Py_INCREF(self->obj);
-  return self->obj;
+  PyObject* pyobject = self->ptr->pyobject();
+  Py_INCREF(pyobject);
+  return pyobject;
 }
 
 static PyMethodDef MyClassRef_methods[] = {

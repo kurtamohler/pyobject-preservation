@@ -1,3 +1,4 @@
+#include <iostream>
 #include "MyClassBase.h"
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
@@ -22,6 +23,7 @@ static PyMethodDef MyClassBase_methods[] = {
 };
 
 void MyClassBase_subclass_dealloc(PyObject* self) {
+  std::cout << "in MyClassBase_subclass_dealloc" << std::endl;
   // Delete the `shared_pointer<MyClass>` properly before freeing
   // `MyClassBase`'s memory, so that the `MyClass::~MyClass` will be called now
   // if this was the last pointer
