@@ -1,22 +1,21 @@
 #include <iostream>
-#include "mylib.h"
+#include <stdexcept>
+
+#include "MyClass.h"
 
 MyClass::MyClass() :
   pyobject_(nullptr),
   owns_pyobject_(false)
 {
   std::cout << "in MyClass::MyClass()" << std::endl;
+
+  pyobj_interpreter_.load(std::memory_order_acquire)->disarm();
 }
 
 MyClass::~MyClass() {
   std::cout << "in MyClass::~MyClass()" << std::endl;
 
-  // TODO: If `owns_pyobject_ == true`, we need to decref it. At the moment,
-  // the PyObject's memory just gets leaked. In PyTorch, TensorImpl obtains the
-  // Python interpreter and calls the decref on the PyObject. But the stuff it
-  // uses to accomplish that from within the C++ `MyClass` context is kind of
-  // complicated and I don't fully understand it yet
-
+  maybe_decref_pyobj();
 }
 
 void MyClass::print_message() {
@@ -37,4 +36,15 @@ void MyClass::set_owns_pyobject(bool owns_pyobject) {
 
 bool MyClass::owns_pyobject() {
   return owns_pyobject_;
+}
+
+void MyClass::maybe_decref_pyobj() {
+  if (owns_pyobject()) {
+    if (pyobj_interpreter_ == nullptr || pyobject_ == nullptr) {
+      throw std::runtime_error("Uh oh");
+    }
+    std::cout << "Calling python interpreter decref" << std::endl;
+    pyobj_interpreter_.load(std::memory_order_acquire)->decref(pyobject_);
+    pyobject_ = nullptr;
+  }
 }

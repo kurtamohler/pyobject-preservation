@@ -1,6 +1,9 @@
 #pragma once
 
+#include <atomic>
+
 #include "python_stub.h"
+#include "PyInterpreter.h"
 
 class MyClass {
 public:
@@ -18,7 +21,12 @@ public:
 
   bool owns_pyobject();
 
+  void maybe_decref_pyobj();
+
 private:
   PyObject* pyobject_;
   bool owns_pyobject_;
+
+protected:
+  std::atomic<PyInterpreter*> pyobj_interpreter_;
 };

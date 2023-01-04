@@ -20,6 +20,7 @@ mylib_cpython = Extension(
 mylib_cpp = ['mylib_cpp', dict(
     sources=[
         'mylib_cpp/MyClass.cpp',
+        'mylib_cpp/PyInterpreter.cpp',
     ],
     include_dirs=['mylib_cpp'],
 )]
