@@ -48,3 +48,8 @@ void MyClass::maybe_decref_pyobj() {
     pyobject_ = nullptr;
   }
 }
+
+void MyClass::set_pyobj_interpreter(PyInterpreter* pyobj_interpreter) {
+  std::cout << "here" << std::endl;
+  pyobj_interpreter_.store(pyobj_interpreter);
+}

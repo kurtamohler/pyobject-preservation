@@ -1,5 +1,9 @@
 #include <iostream>
+
+#include "PyInterpreter.h"
+
 #include "MyClassBase.h"
+#include "PyInterpreterDefs.h"
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
@@ -99,6 +103,7 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
   if (self) {
     self->cdata = std::make_shared<MyClass>();
     self->cdata->set_pyobject((PyObject*) self);
+    self->cdata->set_pyobj_interpreter(&pyobj_interpreter);
   }
 
   return (PyObject*) self;
@@ -152,6 +157,8 @@ PyObject* MyClassBase_get_from_cdata(std::shared_ptr<MyClass> cdata) {
         "For some reason, we're trying to resurrect a PyObject whose refcount "
         "is not equal to 1"));
     }
+
+    std::cout << "Resurrecting PyObject!!!!" << std::endl;
 
     // The C++ `MyClass` won't have an owning ref any more, but we'll have
     // a new ref in Python when this function returns. So the Py_REFCNT should

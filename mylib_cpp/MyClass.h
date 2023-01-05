@@ -23,10 +23,10 @@ public:
 
   void maybe_decref_pyobj();
 
+  void set_pyobj_interpreter(PyInterpreter* pyobj_nterpreter);
+
 private:
   PyObject* pyobject_;
   bool owns_pyobject_;
-
-protected:
   std::atomic<PyInterpreter*> pyobj_interpreter_;
 };
