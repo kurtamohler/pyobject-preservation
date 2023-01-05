@@ -7,11 +7,10 @@ namespace mylib_cpp {
 
 MyClass::MyClass() :
   pyobject_(nullptr),
-  owns_pyobject_(false)
+  owns_pyobject_(false),
+  pyobj_interpreter_(nullptr)
 {
   std::cout << "in MyClass::MyClass()" << std::endl;
-
-  pyobj_interpreter_.load(std::memory_order_acquire)->disarm();
 }
 
 MyClass::~MyClass() {
@@ -42,8 +41,11 @@ bool MyClass::owns_pyobject() {
 
 void MyClass::maybe_decref_pyobj() {
   if (owns_pyobject()) {
-    if (pyobj_interpreter_ == nullptr || pyobject_ == nullptr) {
-      throw std::runtime_error("Uh oh");
+    if (pyobject_ == nullptr) {
+      throw std::runtime_error("Owns PyObject, but got a null PyObject");
+    }
+    if (pyobj_interpreter_ == nullptr) {
+      throw std::runtime_error("Owns PyObject, but got a null interpreter");
     }
     std::cout << "Calling python interpreter decref" << std::endl;
     pyobj_interpreter_.load(std::memory_order_acquire)->decref(pyobject_);
@@ -52,7 +54,6 @@ void MyClass::maybe_decref_pyobj() {
 }
 
 void MyClass::set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter) {
-  std::cout << "here" << std::endl;
   pyobj_interpreter_.store(pyobj_interpreter);
 }
 
