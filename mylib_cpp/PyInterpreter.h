@@ -1,6 +1,9 @@
 #pragma once
 #include "python_stub.h"
 
+namespace mylib_cpp {
+namespace impl {
+
 struct PyInterpreter {
   using decref_signature = void (const PyInterpreter*, PyObject*);
 
@@ -15,3 +18,6 @@ struct PyInterpreter {
 
   void disarm();
 };
+
+}
+}

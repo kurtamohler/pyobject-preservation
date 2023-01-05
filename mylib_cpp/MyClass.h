@@ -5,6 +5,8 @@
 #include "python_stub.h"
 #include "PyInterpreter.h"
 
+namespace mylib_cpp {
+
 class MyClass {
 public:
   MyClass();
@@ -23,10 +25,12 @@ public:
 
   void maybe_decref_pyobj();
 
-  void set_pyobj_interpreter(PyInterpreter* pyobj_nterpreter);
+  void set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter);
 
 private:
   PyObject* pyobject_;
   bool owns_pyobject_;
-  std::atomic<PyInterpreter*> pyobj_interpreter_;
+  std::atomic<impl::PyInterpreter*> pyobj_interpreter_;
 };
+
+}

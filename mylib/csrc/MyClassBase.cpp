@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "PyInterpreter.h"
+#include "mylib.h"
 
 #include "MyClassBase.h"
 #include "PyInterpreterDefs.h"
@@ -33,16 +33,16 @@ void MyClassBase_subclass_dealloc(PyObject* self) {
 
 
   if (Py_REFCNT(self) == 0) {
-    // If there are still references to the C++ MyClass when the PyObject is
+    // If there are still references to mylib_cpp::MyClass when the PyObject is
     // being deallocated, then we have to swap ownership of the MyClassBase to
-    // the C++ MyClass to preserve it.
+    // mylib_cpp::MyClass to preserve it.
     //
     // TODO: This implicitly assumes that no two different MyClassBase instances
-    // can ever point to the same C++ MyClass, but I should probably add support
+    // can ever point to the same mylib_cpp::MyClass, but I should probably add support
     // for that, which will break this logic.
     if (base->cdata.use_count() > 1) {
       std::cout << "Preserving PyObject!!!!" << std::endl;
-      MyClass* myobj = base->cdata.get();
+      mylib_cpp::MyClass* myobj = base->cdata.get();
 
       myobj->set_owns_pyobject(true);
 
@@ -101,7 +101,7 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
   MyClassBase* self;
   self = (MyClassBase*) type->tp_alloc(type, 0);
   if (self) {
-    self->cdata = std::make_shared<MyClass>();
+    self->cdata = std::make_shared<mylib_cpp::MyClass>();
     self->cdata->set_pyobject((PyObject*) self);
     self->cdata->set_pyobj_interpreter(&pyobj_interpreter);
   }
@@ -140,7 +140,7 @@ bool MyClassBase_Check(PyObject* obj) {
   return result;
 }
 
-PyObject* MyClassBase_get_from_cdata(std::shared_ptr<MyClass> cdata) {
+PyObject* MyClassBase_get_from_cdata(std::shared_ptr<mylib_cpp::MyClass> cdata) {
   if (!cdata->pyobject()) {
     throw std::runtime_error(
       "MyClassBase_get_from_cdata received cdata with a null PyObject");
@@ -160,7 +160,7 @@ PyObject* MyClassBase_get_from_cdata(std::shared_ptr<MyClass> cdata) {
 
     std::cout << "Resurrecting PyObject!!!!" << std::endl;
 
-    // The C++ `MyClass` won't have an owning ref any more, but we'll have
+    // The `mylib_cpp::MyClass` won't have an owning ref any more, but we'll have
     // a new ref in Python when this function returns. So the Py_REFCNT should
     // not be changed in this case
     MyClassBase* base = (MyClassBase*) pyobject;

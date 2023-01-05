@@ -3,6 +3,8 @@
 
 #include "MyClass.h"
 
+namespace mylib_cpp {
+
 MyClass::MyClass() :
   pyobject_(nullptr),
   owns_pyobject_(false)
@@ -49,7 +51,9 @@ void MyClass::maybe_decref_pyobj() {
   }
 }
 
-void MyClass::set_pyobj_interpreter(PyInterpreter* pyobj_interpreter) {
+void MyClass::set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter) {
   std::cout << "here" << std::endl;
   pyobj_interpreter_.store(pyobj_interpreter);
+}
+
 }

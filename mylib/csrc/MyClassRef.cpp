@@ -7,12 +7,14 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "mylib.h"
+
 #include "MyClassRef.h"
 #include "MyClassBase.h"
 
 struct MyClassRef {
   PyObject_HEAD
-  std::shared_ptr<MyClass> ptr;
+  std::shared_ptr<mylib_cpp::MyClass> ptr;
 };
 
 static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
