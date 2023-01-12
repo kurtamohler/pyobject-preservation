@@ -16,12 +16,26 @@ static PyObject* MyClassBase_print_message(MyClassBase* self, PyObject* Py_UNUSE
   return Py_None;
 }
 
+static PyObject* MyClassBase_id(MyClassBase* self, PyObject* Py_UNUSED(ignored)) {
+  double id = self->cdata->id();
+
+  PyObject* id_obj = PyLong_FromDouble(id);
+
+  return id_obj;
+}
+
 static PyMethodDef MyClassBase_methods[] = {
   {
     "print_message",
     (PyCFunction) MyClassBase_print_message,
     METH_NOARGS,
     "Prints a message"
+  },
+  {
+    "id",
+    (PyCFunction) MyClassBase_id,
+    METH_NOARGS,
+    "Returns the unique ID of the underlying `mylib::MyClass` instance"
   },
   {NULL, NULL}
 };

@@ -5,10 +5,17 @@
 
 namespace mylib_cpp {
 
+static double get_new_id() {
+  static double id_ = 0;
+
+  return id_++;
+}
+
 MyClass::MyClass() :
   pyobject_(nullptr),
   owns_pyobject_(false),
-  pyobj_interpreter_(nullptr)
+  pyobj_interpreter_(nullptr),
+  id_(get_new_id())
 {
   std::cout << "in MyClass::MyClass()" << std::endl;
 }
@@ -55,6 +62,10 @@ void MyClass::maybe_decref_pyobj() {
 
 void MyClass::set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter) {
   pyobj_interpreter_.store(pyobj_interpreter);
+}
+
+double MyClass::id() {
+  return id_;
 }
 
 }

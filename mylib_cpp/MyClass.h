@@ -27,10 +27,13 @@ public:
 
   void set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter);
 
+  double id();
+
 private:
   PyObject* pyobject_;
   bool owns_pyobject_;
   std::atomic<impl::PyInterpreter*> pyobj_interpreter_;
+  double id_;
 };
 
 }
