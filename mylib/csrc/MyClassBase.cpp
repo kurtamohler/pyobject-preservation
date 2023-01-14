@@ -115,7 +115,7 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
   MyClassBase* self;
   self = (MyClassBase*) type->tp_alloc(type, 0);
   if (self) {
-    self->cdata = std::make_shared<mylib_cpp::MyClass>();
+    self->cdata = mylib_cpp::make_intrusive<mylib_cpp::MyClass>();
     self->cdata->set_pyobject((PyObject*) self);
     self->cdata->set_pyobj_interpreter(&pyobj_interpreter);
   }
@@ -154,7 +154,7 @@ bool MyClassBase_Check(PyObject* obj) {
   return result;
 }
 
-PyObject* MyClassBase_get_from_cdata(std::shared_ptr<mylib_cpp::MyClass> cdata) {
+PyObject* MyClassBase_get_from_cdata(mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> cdata) {
   if (!cdata->pyobject()) {
     throw std::runtime_error(
       "MyClassBase_get_from_cdata received cdata with a null PyObject");

@@ -2,12 +2,13 @@
 
 #include <atomic>
 
+#include "intrusive_ptr.h"
 #include "python_stub.h"
 #include "PyInterpreter.h"
 
 namespace mylib_cpp {
 
-class MyClass {
+class MyClass : public intrusive_ptr_target {
 public:
   MyClass();
 

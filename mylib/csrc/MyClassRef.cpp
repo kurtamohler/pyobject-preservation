@@ -14,7 +14,7 @@
 
 struct MyClassRef {
   PyObject_HEAD
-  std::shared_ptr<mylib_cpp::MyClass> ptr;
+  mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> ptr;
 };
 
 static PyObject* MyClassRef_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {

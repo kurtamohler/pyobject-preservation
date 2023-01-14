@@ -5,11 +5,11 @@
 
 struct MyClassBase {
   PyObject_HEAD
-  std::shared_ptr<mylib_cpp::MyClass> cdata;
+  mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> cdata;
 };
 
 bool MyClassBase_Check(PyObject* obj);
 
-PyObject* MyClassBase_get_from_cdata(std::shared_ptr<mylib_cpp::MyClass> cdata);
+PyObject* MyClassBase_get_from_cdata(mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> cdata);
 
 bool MyClassBase_init_module(PyObject* module);
