@@ -21,6 +21,7 @@ mylib_cpp = ['mylib_cpp', dict(
     sources=[
         'mylib_cpp/MyClass.cpp',
         'mylib_cpp/PyInterpreter.cpp',
+        'mylib_cpp/PyObjectSlot.cpp',
     ],
     include_dirs=['mylib_cpp'],
 )]

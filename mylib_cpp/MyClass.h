@@ -3,37 +3,20 @@
 #include <atomic>
 
 #include "intrusive_ptr.h"
-#include "python_stub.h"
-#include "PyInterpreter.h"
+#include "PyObjectSlot.h"
 
 namespace mylib_cpp {
 
 class MyClass : public intrusive_ptr_target {
 public:
   MyClass();
-
   ~MyClass();
-
   void print_message();
-
-  void set_pyobject(PyObject* pyobject);
-
-  PyObject* pyobject();
-
-  void set_owns_pyobject(bool owns_pyobject);
-
-  bool owns_pyobject();
-
-  void maybe_decref_pyobj();
-
-  void set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter);
-
   double id();
+  PyObjectSlot* pyobj_slot();
 
 private:
-  PyObject* pyobject_;
-  bool owns_pyobject_;
-  std::atomic<impl::PyInterpreter*> pyobj_interpreter_;
+  PyObjectSlot pyobj_slot_;
   double id_;
 };
 
