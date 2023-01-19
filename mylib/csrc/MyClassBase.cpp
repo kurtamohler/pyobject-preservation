@@ -3,7 +3,7 @@
 #include "mylib.h"
 
 #include "MyClassBase.h"
-#include "PyInterpreterDefs.h"
+#include "PyObjectPreservation.h"
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
@@ -36,44 +36,8 @@ static PyMethodDef MyClassBase_methods[] = {
   {NULL, NULL}
 };
 
-void MyClassBase_subclass_dealloc(PyObject* self) {
-  std::cout << "in MyClassBase_subclass_dealloc" << std::endl;
-
-  MyClassBase* base = (MyClassBase*) self;
-
-
-  if (Py_REFCNT(self) == 0) {
-    // If there are still references to mylib_cpp::MyClass when the PyObject is
-    // being deallocated, then we have to swap ownership of the MyClassBase to
-    // mylib_cpp::MyClass to preserve it.
-    //
-    // TODO: This implicitly assumes that no two different MyClassBase instances
-    // can ever point to the same mylib_cpp::MyClass, but I should probably add support
-    // for that, which will break this logic.
-    if (base->cdata.use_count() > 1) {
-      std::cout << "Preserving PyObject!!!!" << std::endl;
-      mylib_cpp::MyClass* myobj = base->cdata.get();
-
-      myobj->pyobj_slot()->set_owns_pyobj(true);
-
-      // Need to incref the PyObject to keep it in the zombie state
-      Py_INCREF(self);
-
-      base->cdata.reset();
-
-    } else {
-      std::cout << "Deleting PyObject!!!!" << std::endl;
-      base->cdata.reset();
-
-      Py_TYPE(self)->tp_free((PyObject*) self);
-    }
-  } else {
-    std::cout << "PyObject refcount is nonzero, keeping alive" << std::endl;
-  }
-}
-
 int MyClassMeta_init(PyObject* cls, PyObject* args, PyObject* kwargs) {
-  ((PyTypeObject*)cls)->tp_dealloc = (destructor)MyClassBase_subclass_dealloc;
+  ((PyTypeObject*)cls)->tp_dealloc = (destructor)pyobj_preservation::dealloc_or_preserve<MyClassBase, mylib_cpp::MyClass>;
   return 0;
 }
 
@@ -107,15 +71,10 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
       "_MyClassBase cannot be instantiated directly. Please use a subclass");
     return NULL;
   }
-  MyClassBase* self;
-  self = (MyClassBase*) type->tp_alloc(type, 0);
-  if (self) {
-    self->cdata = mylib_cpp::make_intrusive<mylib_cpp::MyClass>();
-    self->cdata->pyobj_slot()->set_pyobj((PyObject*) self);
-    self->cdata->pyobj_slot()->set_pyobj_interpreter(&pyobj_interpreter);
-  }
 
-  return (PyObject*) self;
+  PyObject* self = type->tp_alloc(type, 0);
+  pyobj_preservation::init_pyobj<MyClassBase, mylib_cpp::MyClass>(self);
+  return self;
 }
 
 static PyObject* MyClassBaseClass = nullptr;
@@ -150,38 +109,7 @@ bool MyClassBase_Check(PyObject* obj) {
 }
 
 PyObject* MyClassBase_get_from_cdata(mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> cdata) {
-  if (!cdata->pyobj_slot()->pyobj()) {
-    throw std::runtime_error(
-      "MyClassBase_get_from_cdata received cdata with a null PyObject");
-  }
-
-  PyObject* pyobj = cdata->pyobj_slot()->pyobj();
-
-  // If cdata owns the PyObject, we need to resurrect it
-  if (cdata->pyobj_slot()->owns_pyobj()) {
-    // The PyObject refcount should remain 1 the whole time it's a zombie. If it's
-    // not, then something went wrong.
-    if (Py_REFCNT(pyobj) != 1) {
-      throw std::runtime_error((
-        "For some reason, we're trying to resurrect a PyObject whose refcount "
-        "is not equal to 1"));
-    }
-
-    std::cout << "Resurrecting PyObject!!!!" << std::endl;
-
-    // The `mylib_cpp::MyClass` won't have an owning ref any more, but we'll have
-    // a new ref in Python when this function returns. So the Py_REFCNT should
-    // not be changed in this case
-    MyClassBase* base = (MyClassBase*) pyobj;
-    base->cdata = cdata;
-
-    cdata->pyobj_slot()->set_owns_pyobj(false);
-
-  } else {
-    Py_INCREF(pyobj);
-  }
-
-  return pyobj;
+  return pyobj_preservation::get_pyobj_from_cdata<MyClassBase>(cdata);
 }
 
 bool MyClassBase_init_module(PyObject* module) {
