@@ -91,7 +91,7 @@ static PyTypeObject MyClassMetaType = {
 };
 
 static PyTypeObject MyClassBaseType = {
-  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  PyVarObject_HEAD_INIT(&MyClassMetaType, 0)
   .tp_name = "_MyClassBase",
   .tp_basicsize = sizeof(MyClassBase),
   .tp_dealloc = nullptr,
