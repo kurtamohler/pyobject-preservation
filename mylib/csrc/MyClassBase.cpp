@@ -36,6 +36,26 @@ static PyMethodDef MyClassBase_methods[] = {
   {NULL, NULL}
 };
 
+// In order to preserve the PyObject when the Python refcount goes to zero, we
+// have to use a dealloc function `dealloc_or_preserve` that has the ability to
+// cancel the deallocation if there are any other live references to the
+// `mylib_cpp::MyClass` object.
+//
+// In order to properly cancel the deallocation, we must use a metaclass. There
+// are two points that explain why:
+//
+//  * In Python, `mylib.MyClass` is a subclass of `_MyClassBase`
+//
+//  * When using the default metaclass, the dealloc function of the subclass
+//    is called before the dealloc function of the base class
+//
+// So if we used the default metaclass, in cases where the PyObject will be
+// preserved, the subclass `mylib.MyClass` would first get deallocated, and
+// then the `dealloc_or_preserve` function of the base class `_MyClassBase`
+// gets called. This would leave us with a messed up half preserved / half
+// deallocated PyObject. Therefore, we use a metaclass that calls
+// `dealloc_or_preserve` before the subclass is deallocated.
+
 int MyClassMeta_init(PyObject* cls, PyObject* args, PyObject* kwargs) {
   ((PyTypeObject*)cls)->tp_dealloc = (destructor)pyobj_preservation::dealloc_or_preserve<MyClassBase, mylib_cpp::MyClass>;
   return 0;
