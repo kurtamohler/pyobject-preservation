@@ -5,7 +5,6 @@
 
 #include <memory>
 #include <iostream>
-#include <stdexcept>
 
 #include "mylib.h"
 

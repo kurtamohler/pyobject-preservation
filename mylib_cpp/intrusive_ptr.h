@@ -3,7 +3,6 @@
 #pragma once
 
 #include <atomic>
-#include <stdexcept>
 #include <climits>
 #include <memory>
 

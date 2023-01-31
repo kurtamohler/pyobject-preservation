@@ -56,10 +56,9 @@ void dealloc_or_preserve(PyObject* self) {
 
 template<typename BaseT, typename CppT>
 PyObject* get_pyobj_from_cdata(mylib_cpp::intrusive_ptr<CppT> cdata) {
-  if (!cdata->pyobj_slot()->pyobj()) {
-    throw std::runtime_error(
-      "get_pyobj_from_cdata received cdata with a null PyObject");
-  }
+  MYLIB_ASSERT(
+    cdata->pyobj_slot()->pyobj(),
+    "get_pyobj_from_cdata received cdata with a null PyObject");
 
   PyObject* pyobj = cdata->pyobj_slot()->pyobj();
 
@@ -67,11 +66,12 @@ PyObject* get_pyobj_from_cdata(mylib_cpp::intrusive_ptr<CppT> cdata) {
   if (cdata->pyobj_slot()->owns_pyobj()) {
     // The PyObject refcount should remain 1 the whole time it's a zombie. If it's
     // not, then something went wrong.
-    if (Py_REFCNT(pyobj) != 1) {
-      throw std::runtime_error((
+    MYLIB_ASSERT(
+      Py_REFCNT(pyobj) == 1,
+      (
         "For some reason, we're trying to resurrect a PyObject whose refcount "
-        "is not equal to 1"));
-    }
+        "is not equal to 1"
+      ));
 
     std::cout << "Resurrecting PyObject!!!!" << std::endl;
 

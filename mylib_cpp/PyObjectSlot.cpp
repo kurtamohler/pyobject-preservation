@@ -1,7 +1,7 @@
 #include <iostream>
-#include <stdexcept>
 
 #include "PyObjectSlot.h"
+#include "Exceptions.h"
 
 namespace mylib_cpp {
 
@@ -23,12 +23,12 @@ bool PyObjectSlot::owns_pyobj() {
 
 void PyObjectSlot::maybe_decref_pyobj() {
   if (owns_pyobj()) {
-    if (pyobj_ == nullptr) {
-      throw std::runtime_error("Owns PyObject, but got a null PyObject");
-    }
-    if (pyobj_interpreter_ == nullptr) {
-      throw std::runtime_error("Owns PyObject, but got a null interpreter");
-    }
+    MYLIB_ASSERT(
+      pyobj_ != nullptr,
+      "Owns PyObject, but got a null PyObject");
+    MYLIB_ASSERT(
+      pyobj_interpreter_ != nullptr,
+      "Owns PyObject, but got a null interpreter");
     std::cout << "Calling python interpreter decref" << std::endl;
     pyobj_interpreter_.load(std::memory_order_acquire)->decref(pyobj_);
     pyobj_ = nullptr;
