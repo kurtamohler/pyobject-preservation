@@ -7,6 +7,10 @@
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs);
 
+static int MyClassBase_clear(MyClassBase* self) {
+  MYLIB_ASSERT(false, "MyClassBase_clear not implemented yet");
+}
+
 static PyObject* MyClassBase_print_message(MyClassBase* self, PyObject* Py_UNUSED(ignored)) {
   self->cdata->print_message();
   return Py_None;
@@ -80,9 +84,18 @@ static PyTypeObject MyClassBaseType = {
   .tp_basicsize = sizeof(MyClassBase),
   .tp_dealloc = nullptr,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+
+  // TODO: Do we actually need this?
+  //.tp_clear = (inquiry)MyClassBase_clear,
+
   .tp_methods = MyClassBase_methods,
   .tp_new = MyClassBase_new,
 };
+
+template <>
+PyTypeObject* pyobj_preservation::get_pytype(MyClassBase*) {
+  return &MyClassBaseType;
+}
 
 static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
   if (type == &MyClassBaseType) {

@@ -1,9 +1,10 @@
 #pragma once
 
+#include <iostream>
+#include <Python.h>
+
 #include "mylib.h"
 #include "PyInterpreterDefs.h"
-
-#include <iostream>
 
 namespace pyobj_preservation {
 
@@ -18,9 +19,106 @@ void init_pyobj(PyObject* self) {
   }
 }
 
+// A template specialization of this function needs to be definined for the BaseT
+// TODO: Do I like doing it this way? Is there another way?
+template <typename BaseT>
+PyTypeObject* get_pytype(BaseT*);
+
+static void _clear_slots(PyTypeObject* type, PyObject* self) {
+  Py_ssize_t n = Py_SIZE(type);
+  PyMemberDef* mp = type->tp_members;
+
+  // TODO: For some reason this won't compile, with
+  // `error: invalid use of incomplete type 'PyMemberDef'`
+
+  //for (Py_ssize_t i = 0; i < n; i++) {
+  //  if (mp[i].type == T_OBJECT_EX && !(mp[i].flags & READONLY)) {
+  //    char* addr = (char*)self + mp[i].offset;
+  //    PyObject* obj = *(PyObject**)addr;
+  //    if (obj != nullptr) {
+  //      *(PyObject**)addr = nullptr;
+  //      Py_DECREF(obj);
+  //    }
+  //  }
+  //}
+}
+
+template <typename BaseT, typename CppT>
+void _dealloc(PyObject* self) {
+  std::cout << "in _dealloc" << std::endl;
+  BaseT* base = (BaseT*) self;
+
+  PyTypeObject* type = Py_TYPE(self);
+  MYLIB_ASSERT(type->tp_flags & Py_TPFLAGS_HEAPTYPE, "Must be on heap");
+  MYLIB_ASSERT(PyType_IS_GC(type), "GC types not implemented");
+
+  PyObject_GC_UnTrack(self);
+
+  bool has_finalizer = type->tp_finalize || type->tp_del;
+
+  if (type->tp_finalize) {
+    PyObject_GC_Track(self);
+    if (PyObject_CallFinalizerFromDealloc(self) < 0) {
+      // Resurrected
+      return;
+    }
+    PyObject_GC_UnTrack(self);
+  }
+
+  if (type->tp_del) {
+    PyObject_GC_Track(self);
+    type->tp_del(self);
+    if (self->ob_refcnt > 0) {
+      // Resurrected
+      return;
+    }
+    PyObject_GC_UnTrack(self);
+  }
+
+  std::cout << "Deleting PyObject!!!! (" << Py_TYPE(self)->tp_name << ")" << std::endl;
+
+  PyTypeObject* base_type = get_pytype<BaseT>((BaseT*)nullptr);
+
+  // Clear the members of all subclasses until we reach the base python type
+  {
+    PyTypeObject* cur_type = type;
+    while (cur_type != base_type) {
+      if (Py_SIZE(cur_type)) {
+        _clear_slots(cur_type, self);
+      }
+      cur_type = cur_type->tp_base;
+      MYLIB_ASSERT(cur_type, "");
+    }
+  }
+
+  if (type->tp_dictoffset) {
+    PyObject** dictptr = _PyObject_GetDictPtr(self);
+    if (dictptr != nullptr) {
+      PyObject* dict = *dictptr;
+      if (dict != nullptr) {
+        Py_DECREF(dict);
+        *dictptr = nullptr;
+      }
+    }
+  }
+
+  MYLIB_ASSERT(Py_TYPE(self) == type, "");
+
+  if (base_type->tp_clear != nullptr) {
+    base_type->tp_clear(self);
+  }
+  base->cdata.reset();
+  Py_TYPE(self)->tp_free(self);
+
+  MYLIB_ASSERT(
+    type->tp_flags & Py_TPFLAGS_HEAPTYPE,
+    "Python subclass was not on the heap");
+  Py_DECREF(type);
+}
+
 template <typename BaseT, typename CppT>
 void dealloc_or_preserve(PyObject* self) {
-  std::cout << "in PyObjectPreservation_dealloc" << std::endl;
+  std::cout << "in dealloc_or_preserve" << std::endl;
 
   BaseT* base = (BaseT*) self;
 
@@ -44,10 +142,7 @@ void dealloc_or_preserve(PyObject* self) {
       base->cdata.reset();
 
     } else {
-      std::cout << "Deleting PyObject!!!!" << std::endl;
-      base->cdata.reset();
-
-      Py_TYPE(self)->tp_free((PyObject*) self);
+      _dealloc<BaseT, CppT>(self);
     }
   } else {
     std::cout << "PyObject refcount is nonzero, keeping alive" << std::endl;

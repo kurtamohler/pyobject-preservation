@@ -2,6 +2,18 @@ import mylib
 import unittest
 import gc
 
+class Tracker:
+    def __init__(self, marker):
+        self.marker = marker
+
+    @staticmethod
+    def make():
+        marker = [False]
+        return marker, Tracker(marker)
+
+    def __del__(self):
+        self.marker[0] = True
+
 class MyClassTest(unittest.TestCase):
     def test_id(self):
         objects = [mylib.MyClass() for _ in range(10)]
@@ -84,6 +96,49 @@ class MyClassTest(unittest.TestCase):
 
         self.assertTrue(isinstance(b, MySubclass))
         self.assertEqual(b.id(), id_check)
+
+    def test_tracker(self):
+        m, t = Tracker.make()
+        self.assertFalse(m[0])
+        del t
+        self.assertTrue(m[0])
+
+    def test_dealloc(self):
+        m, t = Tracker.make()
+        a = mylib.MyClass()
+        a.__dict__['tmp'] = t
+        del t
+        self.assertFalse(m[0])
+        del a
+        gc.collect()
+        self.assertTrue(m[0])
+
+    def test_dealloc_zombie(self):
+        m, t = Tracker.make()
+        a = mylib.MyClass()
+        a.__dict__['tmp'] = t
+        del t
+        self.assertFalse(m[0])
+        r = mylib.MyClassRef(a)
+        del a
+        self.assertFalse(m[0])
+        del r
+        self.assertTrue(m[0])
+
+    def test_dealloc_resurrected(self):
+        m, t = Tracker.make()
+        a = mylib.MyClass()
+        a.__dict__['tmp'] = t
+        del t
+        self.assertFalse(m[0])
+        r = mylib.MyClassRef(a)
+        del a
+        self.assertFalse(m[0])
+        b = r.get()
+        del r
+        self.assertFalse(m[0])
+        del b
+        self.assertTrue(m[0])
 
 if __name__ == '__main__':
     unittest.main()
