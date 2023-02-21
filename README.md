@@ -75,14 +75,12 @@ Here is a simple demonstration:
 
 ```python
 import mylib
-import gc
 
 a = mylib.MyClass()
 ref = mylib.MyClassRef(a)
 
 # The PyObject becomes a zombie
 del a
-gc.collect()
 
 # The zombie PyObject is resurrected
 b = ref.get()
@@ -117,13 +115,11 @@ PyObject is preserved.
 
 ```python
 import mylib
-import gc
 
 a = mylib.MyClass()
 a.__dict__['my_property'] = 'this is a property'
 ref = mylib.MyClassRef(a)
 del a
-gc.collect()
 b = ref.get()
 
 # This only works if PyObject was preserved:
@@ -143,7 +139,6 @@ PyObject preservation also preserves subclass information.
 
 ```python
 import mylib
-import gc
 
 class MySubclass(mylib.MyClass):
   pass
@@ -151,7 +146,6 @@ class MySubclass(mylib.MyClass):
 a = MySublass()
 ref = mylib.MyClassRef(a)
 del a
-gc.collect()
 b = ref.get()
 
 # Fails if PyObject was not preserved

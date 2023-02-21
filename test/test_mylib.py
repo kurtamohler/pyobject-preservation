@@ -1,6 +1,5 @@
 import mylib
 import unittest
-import gc
 
 class Tracker:
     def __init__(self, marker):
@@ -36,7 +35,6 @@ class MyClassTest(unittest.TestCase):
             self.assertNotIn(id_, ids)
 
             del a
-            gc.collect()
 
             ids.append(id_)
 
@@ -52,7 +50,6 @@ class MyClassTest(unittest.TestCase):
             self.assertEqual(r.get().id(), id_check)
 
         del a
-        gc.collect()
 
         for r in refs:
             self.assertTrue(r.get() is refs[0].get())
@@ -67,12 +64,10 @@ class MyClassTest(unittest.TestCase):
         r = mylib.MyClassRef(a)
 
         del a
-        gc.collect()
 
         b = r.get()
 
         del r
-        gc.collect()
 
         self.assertTrue(hasattr(b, 'my_property'))
         self.assertEqual(b.my_property, property_val)
@@ -87,12 +82,10 @@ class MyClassTest(unittest.TestCase):
         id_check = a.id()
 
         del a
-        gc.collect()
 
         b = r.get()
 
         del r
-        gc.collect()
 
         self.assertTrue(isinstance(b, MySubclass))
         self.assertEqual(b.id(), id_check)
@@ -110,7 +103,6 @@ class MyClassTest(unittest.TestCase):
         del t
         self.assertFalse(m[0])
         del a
-        gc.collect()
         self.assertTrue(m[0])
 
     def test_dealloc_zombie(self):
