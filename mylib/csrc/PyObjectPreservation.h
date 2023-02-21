@@ -151,6 +151,9 @@ void dealloc_or_preserve(PyObject* self) {
 
 template<typename BaseT, typename CppT>
 PyObject* get_pyobj_from_cdata(mylib_cpp::intrusive_ptr<CppT> cdata) {
+
+  // TODO: This should be a valid case, for when a `CppT` instance is created
+  // in pure-C++ context and then returned up to Python context.
   MYLIB_ASSERT(
     cdata->pyobj_slot()->pyobj(),
     "get_pyobj_from_cdata received cdata with a null PyObject");
