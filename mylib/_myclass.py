@@ -1,4 +1,4 @@
 import _mylib
 
-class MyClass(_mylib._MyClassBase):
+class MyClass(_mylib.MyClassBase):
     pass

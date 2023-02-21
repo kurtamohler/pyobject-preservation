@@ -48,14 +48,14 @@ static PyMethodDef MyClassBase_methods[] = {
 // In order to properly cancel the deallocation, we must use a metaclass. There
 // are two points that explain why:
 //
-//  * In Python, `mylib.MyClass` is a subclass of `_MyClassBase`
+//  * In Python, `mylib.MyClass` is a subclass of `MyClassBase`
 //
 //  * When using the default metaclass, the dealloc function of the subclass
 //    is called before the dealloc function of the base class
 //
 // So if we used the default metaclass, in cases where the PyObject will be
 // preserved, the subclass `mylib.MyClass` would first get deallocated, and
-// then the `dealloc_or_preserve` function of the base class `_MyClassBase`
+// then the `dealloc_or_preserve` function of the base class `MyClassBase`
 // gets called. This would leave us with a messed up half preserved / half
 // deallocated PyObject. Therefore, we use a metaclass that calls
 // `dealloc_or_preserve` before the subclass is deallocated.
@@ -71,7 +71,7 @@ struct MyClassMeta {
 
 static PyTypeObject MyClassMetaType = {
   PyVarObject_HEAD_INIT(nullptr, 0)
-  .tp_name = "_MyClassMeta",
+  .tp_name = "MyClassMeta",
   .tp_basicsize = sizeof(MyClassMeta),
   .tp_dealloc = nullptr,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
@@ -80,7 +80,7 @@ static PyTypeObject MyClassMetaType = {
 
 static PyTypeObject MyClassBaseType = {
   PyVarObject_HEAD_INIT(&MyClassMetaType, 0)
-  .tp_name = "_MyClassBase",
+  .tp_name = "MyClassBase",
   .tp_basicsize = sizeof(MyClassBase),
   .tp_dealloc = nullptr,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
@@ -101,7 +101,7 @@ static PyObject* MyClassBase_new(PyTypeObject* type, PyObject* args, PyObject* k
   if (type == &MyClassBaseType) {
     PyErr_SetString(
       PyExc_RuntimeError,
-      "_MyClassBase cannot be instantiated directly. Please use a subclass");
+      "MyClassBase cannot be instantiated directly. Please use a subclass");
     return NULL;
   }
 
@@ -152,7 +152,7 @@ bool MyClassBase_init_module(PyObject* module) {
     return false;
   }
   Py_INCREF(&MyClassMetaType);
-  if (PyModule_AddObject(module, "_MyClassMeta", (PyObject*)&MyClassMetaType) < 0) {
+  if (PyModule_AddObject(module, "MyClassMeta", (PyObject*)&MyClassMetaType) < 0) {
     Py_DECREF(&MyClassMetaType);
     return false;
   }
@@ -161,7 +161,7 @@ bool MyClassBase_init_module(PyObject* module) {
     return false;
   }
   Py_INCREF(&MyClassBaseType);
-  if (PyModule_AddObject(module, "_MyClassBase", (PyObject*) &MyClassBaseType) < 0) {
+  if (PyModule_AddObject(module, "MyClassBase", (PyObject*) &MyClassBaseType) < 0) {
     Py_DECREF(&MyClassBaseType);
     return false;
   }

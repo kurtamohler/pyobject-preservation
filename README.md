@@ -186,11 +186,11 @@ a Python library implemented in C++ with CPython in
 `mylib_cpp`, a pure-C++ library defined in [`mylib_cpp/`](mylib_cpp/).
 
 `mylib.MyClass`, defined in [`mylib/_myclass.py`](mylib/_myclass.py), is just
-a subclass of `_mylib._MyClassBase`, which is defined in
+a subclass of `_mylib.MyClassBase`, which is defined in
 [`mylib/csrc/MyClassBase.h`](mylib/csrc/MyClassBase.h) and
 [`mylib/csrc/MyClassBase.cpp`](mylib/csrc/MyClassBase.cpp). `mylib.MyClass`
 does not add any methods or overload any methods of its parent class. In
-CPython, the struct `MyClassBase` is the PyObject for `_mylib._MyClassBase`.
+CPython, the struct `MyClassBase` is the PyObject for `_mylib.MyClassBase`.
 
 The CPython `MyClassBase` contains an `intrusive_ptr` that points to the
 underlying pure-C++ `mylib_cpp::MyClass`, which is defined in
@@ -222,28 +222,28 @@ so, cancel the deallocation and give the `mylib_cpp::MyClass` object a pointer
 to the PyObject of the `mylib.MyClass`.
 
 One might attempt to cancel the deallocation within the finalizer of
-`_mylib._MyClassBase`, since we want to have all of the PyObject preservation
+`_mylib.MyClassBase`, since we want to have all of the PyObject preservation
 logic contained within the base class. However, the finalizer of the subclass
 will be called first and then the finalizer of the base class is called (and
 then the finalizer of the base class's base class is called, etc). In the case
 of `mylib.MyClass`, this would be bad. If `mylib.MyClass.__del__` is called
 first, it would unconditionally delete all the subclass information on the
-object.  Then when `_MyClassBase`'s finalizer is called, it would cancel the
+object.  Then when `MyClassBase`'s finalizer is called, it would cancel the
 rest of the deallocation, leaving the PyObject in a partially deallocated
 state. That doesn't accomplish PyObject preservation, since we've lost the
 subclass information.
 
 Instead, we need to override the
 [`tp_dealloc`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc)
-function of any new instance of `_MyClassBase` and its subclasses, and we need
+function of any new instance of `MyClassBase` and its subclasses, and we need
 to use a custom
 [metaclass](https://docs.python.org/3/reference/datamodel.html#metaclasses) to
 accomplish this. The default `tp_dealloc` function is what calls the finalizers
 in the order described above.
 
 In [mylib/csrc/MyClassBase.cpp](mylib/csrc/MyClassBase.cpp), the metaclass
-`_mylib._MyClassMeta` is defined and applied to `_mylib._MyClassBase`. When any
-subclass of `_mylib._MyClassBase` (like `mylib.MyClass`) is being created,
+`_mylib.MyClassMeta` is defined and applied to `_mylib.MyClassBase`. When any
+subclass of `_mylib.MyClassBase` (like `mylib.MyClass`) is being created,
 `MyClassMeta_init()` is called. This function overrides the
 [`tp_dealloc`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc)
 function of the new object being created. We set it to our own deallocation
