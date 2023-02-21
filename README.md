@@ -220,39 +220,43 @@ as well.
 When a Python object's reference count goes to zero, the object's finalizer,
 the
 [`__del__`](https://docs.python.org/3/reference/datamodel.html#object.__del__)
-method, is called automatically. This function is typically used to clean up
-any resources that the object was using. But we want to implement a finalizer
-for `mylib.MyClass` that can detect whether the underlying `mylib_cpp::MyClass`
-has more than one reference to it, and if so, cancel the destruction and give
-the `mylib_cpp::MyClass` object a pointer to the PyObject of the
-`mylib.MyClass`.
+method, is usually called automatically. This function is typically used to
+clean up any resources that the class instance was using. But we want to
+implement a deallocation function for `mylib.MyClass` that can detect whether
+the underlying `mylib_cpp::MyClass` has more than one reference to it, and if
+so, cancel the deallocation and give the `mylib_cpp::MyClass` object a pointer
+to the PyObject of the `mylib.MyClass`.
 
-Usually, if an instance of a subclass has no more references, the finalizer of
-the subclass is called first and then the finalizer of the base class is called
-(and then the base class's base class is called, etc). But in the case of
-`mylib.MyClass`, this would be bad. We want to have all of the PyObject
-preservation logic in the base class `_MyClassBase`. So if
-`mylib.MyClass.__del__` is called first, it would unconditionally delete all
-the subclass information on the object. Then when `_MyClassBase`'s finalizer is
-called, it would cacel the rest of the deallocation, leaving the PyObject in
-a partially deallocated state. That doesn't accomplish PyObject preservation,
-since we've lost the subclass information.
+One might attempt to cancel the deallocation within the finalizer of
+`_mylib._MyClassBase`, since we want to have all of the PyObject preservation
+logic contained within the base class. However, the finalizer of the subclass
+will be called first and then the finalizer of the base class is called (and
+then the finalizer of the base class's base class is called, etc). In the case
+of `mylib.MyClass`, this would be bad. If `mylib.MyClass.__del__` is called
+first, it would unconditionally delete all the subclass information on the
+object.  Then when `_MyClassBase`'s finalizer is called, it would cancel the
+rest of the deallocation, leaving the PyObject in a partially deallocated
+state. That doesn't accomplish PyObject preservation, since we've lost the
+subclass information.
 
-We can use a custom
-[metaclass](https://docs.python.org/3/reference/datamodel.html#metaclasses) to
-override the normal order of calling the finalizers. In
-[mylib/csrc/MyClassBase.cpp](mylib/csrc/MyClassBase.cpp), the metaclass
-`_mylib._MyClassMeta` is defined and applied to `_mylib._MyClassBase`.
-
-When any subclass of `_mylib._MyClassMeta` (like `mylib.MyClass`) is being
-created, `MyClassMeta_init()` is called. This function overrides the
+Instead, we need to override the
 [`tp_dealloc`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc)
-function of the new object being created. We set it to call our own
-deallocation function `pyobj_preservation::dealloc_or_preserve()`. This allows
-us to override the usual order in which finalizers are called. If the object
-needs to be preserved, we avoid calling the finalizer of the subclass and we
-don't leave the object in a partially deallocated state. We'll talk about
-what exactly this function does in the next section.
+function of any new instance of `_MyClassBase` and its subclasses, and we need
+to use a custom
+[metaclass](https://docs.python.org/3/reference/datamodel.html#metaclasses) to
+accomplish this. The default `tp_dealloc` function is what calls the finalizers
+in the order described above.
+
+In [mylib/csrc/MyClassBase.cpp](mylib/csrc/MyClassBase.cpp), the metaclass
+`_mylib._MyClassMeta` is defined and applied to `_mylib._MyClassBase`. When any
+subclass of `_mylib._MyClassBase` (like `mylib.MyClass`) is being created,
+`MyClassMeta_init()` is called. This function overrides the
+[`tp_dealloc`](https://docs.python.org/3/c-api/typeobj.html#c.PyTypeObject.tp_dealloc)
+function of the new object being created. We set it to our own deallocation
+function `pyobj_preservation::dealloc_or_preserve()`. If the object needs to be
+preserved, we avoid calling any finalizers, and we don't end up with
+a partially deallocated object. We'll talk about what exactly this function
+does in the next section.
 
 ### PyObject preservation logic
 
