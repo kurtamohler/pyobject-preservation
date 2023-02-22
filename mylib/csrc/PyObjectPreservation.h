@@ -14,6 +14,7 @@ void init_pyobj(PyObject* self) {
 
   if (base) {
     base->cdata = mylib_cpp::make_intrusive<CppT>();
+    base->cdata_weak = base->cdata.get();
     base->cdata->pyobj_slot()->set_pyobj(self);
     base->cdata->pyobj_slot()->set_pyobj_interpreter(&pyobj_interpreter);
   }
@@ -149,6 +150,22 @@ void dealloc_or_preserve(PyObject* self) {
   }
 }
 
+// Returns true if it was resurrected, else false
+template<typename BaseT, typename CppT>
+bool maybe_resurrect(BaseT* base) {
+  PyObject* pyobj = (PyObject*) base;
+  // If cdata owns the PyObject, we need to resurrect it
+  if (base->cdata_weak->pyobj_slot()->owns_pyobj()) {
+    std::cout << "Resurrecting PyObject!!!!" << std::endl;
+
+    base->cdata = mylib_cpp::intrusive_ptr<CppT>::reclaim_copy(base->cdata_weak);
+
+    base->cdata->pyobj_slot()->set_owns_pyobj(false);
+    return true;
+  }
+  return false;
+}
+
 template<typename BaseT, typename CppT>
 PyObject* get_pyobj_from_cdata(mylib_cpp::intrusive_ptr<CppT> cdata) {
 
@@ -160,28 +177,10 @@ PyObject* get_pyobj_from_cdata(mylib_cpp::intrusive_ptr<CppT> cdata) {
 
   PyObject* pyobj = cdata->pyobj_slot()->pyobj();
 
-  // If cdata owns the PyObject, we need to resurrect it
-  if (cdata->pyobj_slot()->owns_pyobj()) {
-    // The PyObject refcount should remain 1 the whole time it's a zombie. If it's
-    // not, then something went wrong.
-    MYLIB_ASSERT(
-      Py_REFCNT(pyobj) == 1,
-      (
-        "For some reason, we're trying to resurrect a PyObject whose refcount "
-        "is not equal to 1"
-      ));
-
-    std::cout << "Resurrecting PyObject!!!!" << std::endl;
-
-    // The CppT won't have an owning ref any more, but we'll have
-    // a new ref in Python when this function returns. So the Py_REFCNT should
-    // not be changed in this case
-    BaseT* base = (BaseT*) pyobj;
-    base->cdata = cdata;
-
-    cdata->pyobj_slot()->set_owns_pyobj(false);
-
-  } else {
+  // If it's resurrected, the CppT won't have an owning ref anymore,
+  // but we'll have a new ref in Python, so the Py_REFCNT not not be
+  // changed. Otherwise, increment the refcount
+  if (!maybe_resurrect<BaseT, CppT>(reinterpret_cast<BaseT*>(pyobj))) {
     Py_INCREF(pyobj);
   }
 

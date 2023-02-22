@@ -12,11 +12,14 @@ static int MyClassBase_clear(MyClassBase* self) {
 }
 
 static PyObject* MyClassBase_print_message(MyClassBase* self, PyObject* Py_UNUSED(ignored)) {
+  // TODO: I don't like doing this here.
+  pyobj_preservation::maybe_resurrect<MyClassBase, mylib_cpp::MyClass>(self);
   self->cdata->print_message();
   return Py_None;
 }
 
 static PyObject* MyClassBase_id(MyClassBase* self, PyObject* Py_UNUSED(ignored)) {
+  pyobj_preservation::maybe_resurrect<MyClassBase, mylib_cpp::MyClass>(self);
   double id = self->cdata->id();
 
   PyObject* id_obj = PyLong_FromDouble(id);
