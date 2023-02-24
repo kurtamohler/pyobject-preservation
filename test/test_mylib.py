@@ -75,20 +75,38 @@ class MyClassTest(unittest.TestCase):
 
     def test_preserved_subclass(self):
         class MySubclass(mylib.MyClass):
-            pass
+            finalized_count = 0
 
+            def __del__(self):
+                MySubclass.finalized_count += 1
+
+        m, t = Tracker.make()
         a = MySubclass()
+        a.__dict__['tmp'] = t
+        del t
         r = mylib.MyClassRef(a)
         id_check = a.id()
 
         del a
 
+        self.assertFalse(m[0])
+
         b = r.get()
 
         del r
 
+        self.assertFalse(m[0])
         self.assertTrue(isinstance(b, MySubclass))
         self.assertEqual(b.id(), id_check)
+
+        self.assertEqual(MySubclass.finalized_count, 0)
+
+        del b
+
+        self.assertTrue(m[0])
+
+        # Make sure that the Python defined finalizer was called
+        self.assertEqual(MySubclass.finalized_count, 1)
 
     def test_tracker(self):
         m, t = Tracker.make()

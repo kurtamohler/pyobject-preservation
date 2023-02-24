@@ -54,22 +54,19 @@ void _dealloc(PyObject* self) {
 
   PyObject_GC_UnTrack(self);
 
-  bool has_finalizer = type->tp_finalize || type->tp_del;
-
+  // Call the object's finalizer (`__del__` in Python)
   if (type->tp_finalize) {
+    std::cout << "Calling finalizer (" << Py_TYPE(self)->tp_name << ")" << std::endl;
     PyObject_GC_Track(self);
     if (PyObject_CallFinalizerFromDealloc(self) < 0) {
-      // Resurrected
-      return;
-    }
-    PyObject_GC_UnTrack(self);
-  }
 
-  if (type->tp_del) {
-    PyObject_GC_Track(self);
-    type->tp_del(self);
-    if (self->ob_refcnt > 0) {
-      // Resurrected
+      // Object's finalizer has postponed destruction by creating a new
+      // reference to the object, so we need to cancel deallocation.
+      // Python docs
+      // (https://docs.python.org/3/reference/datamodel.html#object.__del__)
+      // call this "resurrection", but note that it is a slightly different
+      // concept of resurrection than what we're concerned with.
+
       return;
     }
     PyObject_GC_UnTrack(self);
