@@ -5,7 +5,7 @@ namespace mylib_cpp {
 namespace impl {
 
 struct PyInterpreter {
-  using decref_signature = void (const PyInterpreter*, PyObject*);
+  using decref_signature = void (PyObject*);
 
   PyInterpreter(decref_signature* decref_fn)
     : decref_fn_(decref_fn) {}
@@ -13,7 +13,7 @@ struct PyInterpreter {
   decref_signature* decref_fn_;
 
   void decref(PyObject* pyobj) const {
-    return (*decref_fn_)(this, pyobj);
+    return (*decref_fn_)(pyobj);
   }
 
   void disarm();

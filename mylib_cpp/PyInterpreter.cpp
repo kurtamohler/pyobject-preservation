@@ -3,7 +3,7 @@
 namespace mylib_cpp {
 namespace impl {
 
-void decref_nop(const PyInterpreter*, PyObject*) {
+void decref_nop(PyObject*) {
   return;
 }
 

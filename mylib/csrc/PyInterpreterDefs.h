@@ -2,7 +2,7 @@
 
 #include "mylib.h"
 
-void concrete_decref_fn(const mylib_cpp::impl::PyInterpreter* self, PyObject* pyobj) {
+void concrete_decref_fn(PyObject* pyobj) {
   Py_DECREF(pyobj);
 }
 
