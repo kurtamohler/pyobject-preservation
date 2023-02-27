@@ -6,6 +6,10 @@
 struct MyClassBase {
   PyObject_HEAD
   mylib_cpp::intrusive_ptr<mylib_cpp::MyClass> cdata;
+
+  // We keep a normal pointer to the underlying C++ object for when we
+  // need to resurrect
+  mylib_cpp::MyClass* cdata_weak;
 };
 
 bool MyClassBase_Check(PyObject* obj);

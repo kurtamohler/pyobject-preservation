@@ -149,6 +149,19 @@ class MyClassTest(unittest.TestCase):
         self.assertFalse(m[0])
         del b
         self.assertTrue(m[0])
+    
+    def test_weakref(self):
+        import weakref
+
+        a = mylib.MyClass()
+        id_check = a.id()
+
+        r_weak = weakref.ref(a)
+        r = mylib.MyClassRef(a)
+        del a
+
+        b = r_weak()
+        b.id()
 
 if __name__ == '__main__':
     unittest.main()
