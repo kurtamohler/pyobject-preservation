@@ -14,11 +14,12 @@ public:
     owns_pyobj_(false),
     pyobj_interpreter_(nullptr) {}
 
+  ~PyObjectSlot();
+
   void set_pyobj(PyObject* pyobj);
   PyObject* pyobj();
   void set_owns_pyobj(bool owns_pyobj);
   bool owns_pyobj();
-  void maybe_decref_pyobj();
   void set_pyobj_interpreter(impl::PyInterpreter* pyobj_interpreter);
 
 private:

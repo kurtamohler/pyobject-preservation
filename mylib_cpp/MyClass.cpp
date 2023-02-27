@@ -18,8 +18,6 @@ MyClass::MyClass() :
 
 MyClass::~MyClass() {
   std::cout << "in MyClass::~MyClass()" << std::endl;
-
-  pyobj_slot_.maybe_decref_pyobj();
 }
 
 void MyClass::print_message() {

@@ -21,7 +21,7 @@ bool PyObjectSlot::owns_pyobj() {
   return owns_pyobj_;
 }
 
-void PyObjectSlot::maybe_decref_pyobj() {
+PyObjectSlot::~PyObjectSlot() {
   if (owns_pyobj()) {
     MYLIB_ASSERT(
       pyobj_ != nullptr,
